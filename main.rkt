@@ -9,9 +9,9 @@
     (numero (digit (arbno digit)) number)
     (numero ("-" digit (arbno digit)) number)
     (numero (digit (arbno digit) "." digit (arbno digit)) number)
-    (numero ("-" digit (arbno digit)"." digit (arbno digit)) number)
-    (hexadecimal ("0x" (arbno (or digit "a" "b" "c" "d" "e" "f"))) symbol)
-    (octal ("0o" (arbno (or "0" "1" "2" "3" "4" "5" "6" "7"))) symbol)
+    (numero ("-" digit (arbno digit)"." digit (arbno digit)) symbol)
+    (numero-hexa ("0x" (arbno (or digit "a" "b" "c" "d" "e" "f"))) symbol)
+    (numero-octal ("0o" (arbno digit (not "8" "9"))) symbol)
     )
   )
 
@@ -21,6 +21,8 @@
     ;-------------------------------------------EXPRESIONES-------------------------------------------
     (programa (expresion) a-program)
     (expresion (numero) num-exp)
+    (expresion (numero-hexa) numhexa-exp)
+    (expresion (numero-octal) numoctal-exp)
     (expresion (identificador) var-exp)
 
     ;......................................EXPRESIONES BOOLEANAS......................................
