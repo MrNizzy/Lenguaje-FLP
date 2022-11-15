@@ -9,9 +9,11 @@
     (numero (digit (arbno digit)) number)
     (numero ("-" digit (arbno digit)) number)
     (numero (digit (arbno digit) "." digit (arbno digit)) number)
-    (numero ("-" digit (arbno digit)"." digit (arbno digit)) symbol)
-    (numero-hexa ("0x" (arbno (or digit "a" "b" "c" "d" "e" "f"))) symbol)
-    (numero-octal ("0o" (arbno digit (not "8" "9"))) symbol)
+    (numero ("-" digit (arbno digit) "." digit (arbno digit)) number)
+    (numero-hexa ("0x" (or digit "a" "b" "c" "d" "e" "f")
+                       (arbno (or digit "a" "b" "c" "d" "e" "f"))) symbol)
+    (numero-octal ("0o" (or "0" "1" "2" "3" "4" "5" "6" "7")
+                        (arbno (or "0" "1" "2" "3" "4" "5" "6" "7"))) symbol)
     )
   )
 
@@ -43,8 +45,12 @@
     (expresion ("(" expresion (arbno expresion) ")") app-exp)
 
     ;...........................................ASIGNACION............................................
-    (expresion ("begin" expresion (arbno ";" expresion) "end") begin-exp)
+    (expresion ("modify" expresion (arbno ";" expresion) "end") modify-exp)
     (expresion ("set" identificador "=" expresion) set-exp)
+
+    ;...........................................WHILE & FOR...........................................
+    (expresion ("while" expresion ":" expresion) while-exp)
+    (expresion ("for" expresion "in" expresion ":" expresion) for-exp)
 
     ;--------------------------------------------PRIMITIVAS-------------------------------------------
     
