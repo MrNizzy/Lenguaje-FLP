@@ -30,6 +30,8 @@
             ::= "(" <expresion> {"," <expresion>}* ")"
             ::= "set" <identificador> "=" <expresion>
             ::= "begin" <expresion> {";" <expresion>}* "end"
+            ::= "while" <expresion> ":" <expresion>
+            ::= "for" <expresion> "in" <expresion> ":" <expresion>
 
 <primitiva> ::= "+" | "-" | "*" | "%" | "/" | "add1" | "sub1"
             ::= "<" | ">" | "<=" | ">=" | "==" | "!=" | "and" | "or" | "not"
