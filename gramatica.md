@@ -60,12 +60,6 @@
 -20.22
 ```
 
-```pysheme
-for let i = 0 in math (i + 1) in 5 : true
-
-while let i = 0 in math (i > 0) : true
-```
-
 ### Booleanos
 
 ```pyscheme
