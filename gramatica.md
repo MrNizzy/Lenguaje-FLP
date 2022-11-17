@@ -24,7 +24,7 @@
             ::= "true"
             ::= "false"
             ::= "if" <expresion> ":" <expresion> "else" <expresion>
-            ::= "math" "(" <expresion> {<primitiva> <expresion>}* ")"
+            ::= "" "(" <expresion> {<primitiva> <expresion>}* ")"
             ::= "let" <identificador> "=" <expresion> {<identificador "=" <expresion>}* "in" <expresion>
             ::= "proc" "(" <identificador> {"," <identificador>}* ")" <expresion>
             ::= "(" <expresion> {"," <expresion>}* ")"
@@ -73,53 +73,53 @@ false
 ### Condicional
 
 ```pyscheme
-if math (5 > 0) : 5 else 0
+if  (5 > 0) : 5 else 0
 ```
 
 ```pyscheme
-if math (let i = 5 in math(5+i) >= 9) : true else false
+if  (let i = 5 in (5+i) >= 9) : true else false
 ```
 
 ### Expresión infija
 
 ```pyscheme
-math (let a = 5 in let j = 4 in math(5 + j * a) <= 25)
+ (let a = 5 in let j = 4 in (5 + j * a) <= 25)
 ```
 
 ```pyscheme
-math(8%2)
+(8%2)
 ```
 
 ### Locales
 
 ```pyscheme
-let a = math(28%2) in math(a+1)
+let a = (28%2) in (a+1)
 ```
 
 ```pyscheme
-let a = 8 in math(5 * let c = 2 in math(c * c))
+let a = 8 in (5 * let c = 2 in (c * c))
 ```
 
 ### Procedimientos
 
 ```pyscheme
 let
-    f = proc (y , z) math(y + math(z - 5 ))
+    f = proc (y , z) (y + (z - 5 ))
     in
         (f 2 2 8)
         let
-            f = proc (z) math(z * 2)
-            g = proc(x,y) math(x + y)
+            f = proc (z) (z * 2)
+            g = proc(x,y) (x + y)
         in
-            (g (f 3) (f 4))
+            [g [f 3] [f 4]]
 ```
 
 ```pyscheme
 let x = 5
     in
-        let f = proc(y, z) math(y + math(z - x))
+        let f = proc(y, z) (y + (z - x))
         x = 28
-in (f 2 x)
+in [f 2 x]
 ```
 
 ### Asignación
@@ -128,8 +128,8 @@ in (f 2 x)
 let m = 0
     in
         modify
-            set m = math(m+1);
-            set m = math(m*2);
+            set m = (m+1);
+            set m = (m*2);
             m
         end
 
@@ -137,11 +137,11 @@ let x = 100
     in
         let p = proc ( x )
             modify
-                set x = math(x+1) ;
+                set x = (x+1) ;
                 x
             end
         in
-            math((px) + (p x))
+            ((px) + (p x))
 ```
 
 ```pyscheme
@@ -153,18 +153,18 @@ let z = 0
         in
             modify
                 set z = 1;
-                (f 2)
+                [f 2]
             end
 ```
 
 ### While
 
 ```pyscheme
-while let i = 0 in math (i > 0) : true
+while let i = 0 in  (i > 0) : true
 ```
 
 ### For
 
 ```pyscheme
-for let i = 0 in math (i + 1) in 5 : true
+for let i = 0 in  (i + 1) in 5 : true
 ```
