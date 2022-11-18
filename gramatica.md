@@ -6,6 +6,7 @@
 <espacio-blanco>    ::= whitespace
 <comentario>        ::= "#" {}* not #\newline
 <identificador>     ::= letter {letter | digit | "?" | "$"}*
+<texto>             ::= "\"" {letter | digit | "?" | "$" "-" "#" "." whitespace}* "\""
 <numero>            ::= digit {digit}*
                     ::= "-" digit {digit}*
                     ::= digit {digit}* "." digit {digit}*
@@ -24,18 +25,25 @@
             ::= "true"
             ::= "false"
             ::= "if" <expresion> ":" <expresion> "else" <expresion>
-            ::= "" "(" <expresion> {<primitiva> <expresion>}* ")"
+            ::= "(" <expresion> {<primitiva> <expresion>}* ")"
             ::= "let" <identificador> "=" <expresion> {<identificador "=" <expresion>}* "in" <expresion>
             ::= "proc" "(" <identificador> {"," <identificador>}* ")" <expresion>
-            ::= "(" <expresion> {"," <expresion>}* ")"
+            ::= "[" <expresion> {"," <expresion>}* "]"
             ::= "set" <identificador> "=" <expresion>
-            ::= "begin" <expresion> {";" <expresion>}* "end"
+            ::= "modify" <expresion> {";" <expresion>}* "end"
             ::= "while" <expresion> ":" <expresion>
             ::= "for" <expresion> "in" <expresion> ":" <expresion>
+            ::= "struct" <identificador> "=" "{" <identificador> ":" <expresion> {"," <identificador> ":" <expresion>}* "}"
+            ::= "get" <identificador> "." <identificador>
+            ::= "send" <identificador> "." <identificador>
 
-<primitiva> ::= "+" | "-" | "*" | "%" | "/" | "add1" | "sub1"
+<primitiva> ::= "+" | "-" | "*" | "%" | "/"
             ::= "<" | ">" | "<=" | ">=" | "==" | "!=" | "and" | "or" | "not"
-            ::= "length" | "concat"
+
+<primitiva-unaria>  ::= "add1" | "sub1"
+                    ::= "length"
+
+<primitiva-unaria-strings> ::= "concat" 
 ```
 
 ## Ejemplos
@@ -106,7 +114,7 @@ let a = 8 in (5 * let c = 2 in (c * c))
 let
     f = proc (y , z) (y + (z - 5 ))
     in
-        (f 2 2 8)
+        [f 2 g]
         let
             f = proc (z) (z * 2)
             g = proc(x,y) (x + y)
@@ -141,7 +149,7 @@ let x = 100
                 x
             end
         in
-            ((px) + (p x))
+            ([p x] + [p x])
 ```
 
 ```pyscheme
@@ -163,8 +171,56 @@ let z = 0
 while let i = 0 in  (i > 0) : true
 ```
 
+```pyscheme
+while let i = 0 in  (i <= 9) : let j = 5 in (i+j)
+```
+
+> Infinito
+
 ### For
 
 ```pyscheme
 for let i = 0 in  (i + 1) in 5 : true
+```
+
+```pyscheme
+for let i = 0 in  (i + 5) in 20 : let a = 0 in (a+i)
+```
+
+### Estructuras
+
+```pyscheme
+struct persona = {
+    edad: 20,
+    ciudad: "Colombia",
+    salario: "$2.500.000 COP"
+}
+```
+
+```pyscheme
+struct pyscheme = {
+    version: "1.0.0",
+    curso: "Fundamentos de Lenguajes de Programación",
+    hagstag: "#NoMasScheme"
+}
+```
+
+### Obtener atributo
+
+```pyscheme
+get pyscheme.version
+```
+
+```pyscheme
+get pyscheme.hastag
+```
+
+### Modificar atributo
+
+```pyscheme
+send pyscheme.hastag = "#Cancelar"
+```
+
+```pyscheme
+send strucbook.title = "El nuevo emperador"
 ```
