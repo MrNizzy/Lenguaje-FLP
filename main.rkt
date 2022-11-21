@@ -116,7 +116,17 @@
 (define eval-program
   (lambda (pgm)
     (cases programa pgm
-      (a-program (exp) exp))))
+      (a-program (exp) (eval-expresion exp ambiente-inicial)))))
+
+(define eval-expresion
+  (lambda (exp amb)
+    (cases expresion exp
+      (num-exp (number) number)
+      (numHexa-exp (hexa) hexa)
+      (numOctal-exp (octal) octal)
+      (var-exp (id) (apply-env amb id))
+      (texto-exp (texto) texto)
+      (else "tupu"))))
 
 ;--------------------------------------------INTERPRETADOR--------------------------------------------
 (define interpretador
@@ -126,5 +136,50 @@
    (sllgen:make-stream-parser
     especificacion-lexica
     especificacion-gramatical)))
+
+;______________________________________________AMBIENTES______________________________________________
+
+;------------------------------------------------VALOR------------------------------------------------
+(define valor?
+  (lambda (x)
+    #true))
+
+;---------------------------------------ESTRUCTURA DEL AMBIENTE---------------------------------------
+(define-datatype ambiente ambiente?
+  (ambiente-vacio)
+  (ambiente-extendido
+   (identificadores (list-of symbol?))
+   (valores (list-of valor?))
+   (old-env ambiente?)
+   ))
+
+;------------------------------------------AMBIENTE INICIAL-------------------------------------------
+(define ambiente-inicial
+  (ambiente-extendido '(x y z) '(4 2 5)
+                      (ambiente-extendido '(a b c) '(4 5 6)
+                                          (ambiente-vacio))))
+
+;----------------------------------------------APPLY ENV----------------------------------------------
+(define apply-env
+  (lambda (env sym)
+    (cases ambiente env
+      (ambiente-vacio () (eopl:error "No se encuentre la variable:" sym))
+      (ambiente-extendido (lid lval env-old)
+                          (letrec
+                              (
+                               (buscar-sim
+                                (lambda (lid lval sym)
+                                  (cond
+                                    [(null? lid) (apply-env env-old sym)]
+                                    [(equal? (car lid) sym) (car lval)]
+                                    [else (buscar-sim (cdr lid) (cdr lval) sym)]))
+                                )
+                               )
+                            (buscar-sim lid lval sym))
+                          )
+      )
+    )
+  )
+
 
 (interpretador)
