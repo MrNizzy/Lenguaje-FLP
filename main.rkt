@@ -37,7 +37,7 @@
     (expresion ("if" expresion ":" expresion "else" expresion) if-exp)
 
     ;........................................EXPRESION INFIJA.........................................
-    (expresion ("(" expresion (arbno primitiva expresion) ")") prim-exp)
+    (expresion ("(" expresion primitiva expresion ")") prim-exp)
 
     ;.......................................EXPRESIONES LOCALES.......................................
     (expresion ("let" (arbno identificador "=" expresion) "in" expresion) let-exp)
@@ -52,7 +52,7 @@
     
     ;.............................................UNARIAS.............................................
     (expresion (primitiva-unaria "(" expresion ")") unaria-exp)
-    (expresion (primitiva-unariaStrings "(" expresion (arbno "+" expresion) ")") unariaStrings-exp)
+    (expresion (primitiva-unariaStrings "(" expresion "+" expresion ")") unariaStrings-exp)
 
     ;...........................................WHILE & FOR...........................................
     (expresion ("while" expresion ":" expresion) while-exp)
@@ -81,12 +81,12 @@
     (primitiva ("!=") diferente-prim)
     (primitiva ("and") and-prim)
     (primitiva ("or") or-prim)
-    (primitiva ("not") not-prim)
     ;.......................................PRIMITIVAS UNARIAS........................................
     (primitiva-unaria ("add1") add-prim)
     (primitiva-unaria ("sub1") sub-prim)
     ;......................................PRIMITIVAS DE CADENAS......................................
     (primitiva-unaria ("length") length-prim)
+    (primitiva-unaria ("not") not-prim)
     (primitiva-unariaStrings ("concat") concat-prim)
     )
   )
@@ -121,12 +121,85 @@
 (define eval-expresion
   (lambda (exp amb)
     (cases expresion exp
+      ;Numericos
       (num-exp (number) number)
       (numHexa-exp (hexa) hexa)
       (numOctal-exp (octal) octal)
       (var-exp (id) (apply-env amb id))
       (texto-exp (texto) texto)
-      (else "tupu"))))
+      (prim-exp (exp1 prim exp2) (eval-prim (eval-expresion exp1 amb ) prim (eval-expresion exp2 amb)))
+      (unaria-exp (prim args) (evalUnaria-prim prim (eval-expresion args amb)))
+      (unariaStrings-exp (prim exp1 exp2) (evalUnariaString-prim prim (eval-expresion exp1 amb) (eval-expresion exp2 amb)))
+      ;Booleanos
+      (true-exp () #true)
+      (false-exp () #false)
+      ;Condicion
+      (if-exp (condicion hace-verdadero hace-falso)
+              (if
+               (eval-expresion condicion amb) ;Evaluamos la condición
+               (eval-expresion hace-verdadero amb) ;En caso de que sea verdadero
+               (eval-expresion hace-falso amb) ;En caso de que sea falso
+               )
+              )
+      (else "tupu")
+      )
+    )
+  )
+
+(define evalUnariaString-prim
+  (lambda (prim exp exp1)
+    (cases primitiva-unariaStrings prim
+      (concat-prim () (string-append exp exp1))
+      )
+    )
+  )
+
+(define evalUnaria-prim
+  (lambda (exp lval)
+    (cases primitiva-unaria exp
+      (add-prim () (+ lval 1))
+      (sub-prim () (- lval 1))
+      (length-prim () (- (string-length lval) 2))
+      (not-prim () (not lval))
+      )
+    )
+  )
+
+
+(define eval-prim
+  (lambda (val1 prim val2 )
+    (cases primitiva prim
+      ;; primitivas numericas
+      (sum-prim () (+ val1 val2)) 
+      (minus-prim () (- val1 val2) )
+      (mult-prim () (* val1 val2))
+      (div-prim () (/ val1 val2))
+      (mod-prim () (remainder val1 val2))
+      ;; primitivas booleanas
+      (mayor-prim () (> val1 val2))
+      (mayorIgual-prim () (>= val1 val2))
+      (menor-prim () (< val1 val2))
+      (menorIgual-prim () (<= val1 val2))
+      (igual-prim () (= val1 val2))
+      (diferente-prim () (not(equal? val1 val2)))
+      (and-prim () (and val1 val2))
+      (or-prim () (or val1 val2))
+      )
+    )
+  )
+
+(define operacion-prim
+  (lambda (lval op term)
+    (cond
+      [(null? lval) term]
+      [else
+       (op
+        (car lval)
+        (operacion-prim (cdr lval) op term))
+       ]
+      )
+    )
+  )
 
 ;--------------------------------------------INTERPRETADOR--------------------------------------------
 (define interpretador
@@ -140,18 +213,20 @@
 ;______________________________________________AMBIENTES______________________________________________
 
 ;------------------------------------------------VALOR------------------------------------------------
-(define valor?
+(define scheme-value?
   (lambda (x)
-    #true))
+    #t
+    )
+  )
 
 ;---------------------------------------ESTRUCTURA DEL AMBIENTE---------------------------------------
 (define-datatype ambiente ambiente?
   (ambiente-vacio)
   (ambiente-extendido
-   (identificadores (list-of symbol?))
-   (valores (list-of valor?))
-   (old-env ambiente?)
-   ))
+   (lids (list-of symbol?))
+   (lvalue (list-of scheme-value?))
+   (old-env ambiente?))
+  )
 
 ;------------------------------------------AMBIENTE INICIAL-------------------------------------------
 (define ambiente-inicial
