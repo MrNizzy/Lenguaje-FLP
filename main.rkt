@@ -4,17 +4,17 @@
 (define especificacion-lexica
   '(
     (espacio-blanco (whitespace) skip)
-    (comentario ("#" (arbno (not #\newline))) skip)
+    (comentario ("//" (arbno (not #\newline))) skip)
     (identificador (letter (arbno (or letter digit "?" "$"))) symbol)
     (texto ("\"" (arbno (or letter digit "?" "$" "-" "#" "." whitespace)) "\"") string)
     (numero (digit (arbno digit)) number)
     (numero ("-" digit (arbno digit)) number)
     (numero (digit (arbno digit) "." digit (arbno digit)) number)
     (numero ("-" digit (arbno digit) "." digit (arbno digit)) number)
-    (numero-hexa ("0x" (or digit "a" "b" "c" "d" "e" "f")
-                       (arbno (or digit "a" "b" "c" "d" "e" "f"))) string)
-    (numero-octal ("0o" (or "0" "1" "2" "3" "4" "5" "6" "7")
-                        (arbno (or "0" "1" "2" "3" "4" "5" "6" "7"))) string)
+    (numero-hexa ("#x" (or digit "a" "b" "c" "d" "e" "f")
+                       (arbno (or digit "a" "b" "c" "d" "e" "f"))) number)
+    (numero-octal ("#o" (or "0" "1" "2" "3" "4" "5" "6" "7")
+                        (arbno (or "0" "1" "2" "3" "4" "5" "6" "7"))) number)
     )
   )
 
@@ -141,6 +141,68 @@
                (eval-expresion hace-falso amb) ;En caso de que sea falso
                )
               )
+      (let-exp (lid lexp exp)
+                 (let
+                     (
+                      (lexp1 (map (lambda (x) (eval-expresion x amb)) lexp))
+                      )
+                   (eval-expresion
+                    exp
+                    (ambiente-extendido lid lexp1 amb))))
+      ;Procedimientos
+      (proc-exp (ids body)
+                (closure ids body amb))
+      (app-exp (rator rands)
+               (let
+                   (
+                    (lrands (map (lambda (x) (eval-expresion x amb)) rands))
+                    (procV (eval-expresion rator amb))
+                    )
+                 (if
+                  (procval? procV)
+                  (cases procval procV
+                    (closure (lid body old-env)
+                             (if (= (length lid) (length lrands))
+                                 (eval-expresion body
+                                                (ambiente-extendido lid lrands old-env))
+                                 (eopl:error "La cantidad de argumentos no es correcto, porfavor enviar" (length lid)  " y usted ha enviado" (length lrands))
+                                 )
+                             ))
+                  (eopl:error "Solo se admiten procedimientos para ser evaluados" procV) 
+                  )
+                 )
+               )
+      ;Asignaciones
+      ;modify
+      (modify-exp (exp lexp)
+                 (if (null? lexp)
+                     (eval-expresion exp amb)
+                     (begin
+                       (eval-expresion exp amb)
+                       (letrec
+                           (
+                            (eval-exps (lambda (lexp)
+                                         (cond
+                                           [(null? (cdr lexp)) (eval-expresion (car lexp) amb)]
+                                           [else
+                                            (begin
+                                              (eval-expresion (car lexp) amb)
+                                              (eval-exps (cdr lexp)))])
+                                         )))
+                         (eval-exps lexp)
+                         )
+                       )
+                     )
+                 )
+        ;;set
+        (set-exp (id exp)
+               (begin
+                 (setref!
+                  (apply-env amb id)
+                  (eval-expresion exp amb))
+                 1)
+               )
+                   
       (else "tupu")
       )
     )
@@ -188,6 +250,63 @@
     )
   )
 
+
+(define eval-primOctal
+  (lambda (val1 prim val2 )
+
+    (define val1-dec (string->number val1 8))
+    (define val2-dec (string->number val2 8))
+    
+    (cases primitiva prim
+      ;; primitivas numericas
+      (sum-prim () (+ val1-dec val2-dec)) 
+      (minus-prim () (- val1-dec val2-dec) )
+      (mult-prim () (* val1-dec val2-dec))
+      (div-prim () (/ val1-dec val2-dec))
+      (mod-prim () (remainder val1-dec val2-dec))
+      
+      ;; primitivas booleanas
+      (mayor-prim () (> val1-dec val2-dec))
+      (mayorIgual-prim () (>= val1-dec val2-dec))
+      (menor-prim () (< val1-dec val2-dec))
+      (menorIgual-prim () (<= val1-dec val2-dec))
+      (igual-prim () (= val1-dec val2-dec))
+      (diferente-prim () (not(equal? val1-dec val2-dec)))
+      (and-prim () (and val1-dec val2-dec))
+      (or-prim () (or val1-dec val2-dec))
+      )
+    )
+  )
+
+
+(define eval-primHexa
+  (lambda (val1 prim val2 )
+
+    (define val1-dec (string->number val1 16))
+    (define val2-dec (string->number val2 16))
+    
+    (cases primitiva prim
+      ;; primitivas numericas
+      (sum-prim () (+ val1-dec val2-dec)) 
+      (minus-prim () (- val1-dec val2-dec) )
+      (mult-prim () (* val1-dec val2-dec))
+      (div-prim () (/ val1-dec val2-dec))
+      (mod-prim () (remainder val1-dec val2-dec))
+      ;; primitivas booleanas
+      (mayor-prim () (> val1-dec val2-dec))
+      (mayorIgual-prim () (>= val1-dec val2-dec))
+      (menor-prim () (< val1-dec val2-dec))
+      (menorIgual-prim () (<= val1-dec val2-dec))
+      (igual-prim () (= val1-dec val2-dec))
+      (diferente-prim () (not(equal? val1-dec val2-dec)))
+      (and-prim () (and val1-dec val2-dec))
+      (or-prim () (or val1-dec val2-dec))
+      )
+    )
+  )
+
+
+
 (define operacion-prim
   (lambda (lval op term)
     (cond
@@ -200,6 +319,35 @@
       )
     )
   )
+
+
+
+
+;---------------------------------------------REFERENCIAS----------------------------------------------
+
+(define-datatype referencia referencia?
+  (a-ref (pos number?)
+         (vec vector?)))
+
+;--------------------------------------------PROCEDIMIENTOS--------------------------------------------
+
+(define-datatype procval procval?
+  (closure (lid (list-of symbol?))
+           (body expresion?)
+           (env ambiente?)))
+
+;;Asignación/cambio referencias
+(define setref!
+  (lambda (ref val)
+    (primitiva-setref! ref val)))
+
+(define primitiva-setref!
+  (lambda (ref val)
+    (cases referencia ref
+      (a-ref (pos vec)
+             (vector-set! vec pos val)))))
+
+
 
 ;--------------------------------------------INTERPRETADOR--------------------------------------------
 (define interpretador
