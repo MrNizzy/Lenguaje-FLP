@@ -1,5 +1,8 @@
 #lang eopl
 
+;TODA LA DOCUMENTACION ESTA EN:
+;https://github.com/MrNizzy/Lenguaje-FLP/blob/main/gramatica.md
+
 ;****************************************ESPECIFICACION LEXICA****************************************
 (define especificacion-lexica
   '(
@@ -141,6 +144,7 @@
                (eval-expresion hace-falso amb) ;En caso de que sea falso
                )
               )
+      ;Locales
       (let-exp (lid lexp exp)
                  (let
                      (
@@ -174,7 +178,6 @@
                )
       ;Asignaciones
       ;modify
-      ;;begin
       (modify-exp (exp lexp)
                  (if
                   (null? lexp)
@@ -201,7 +204,7 @@
                     )
                   )
                  )
-        ;;set
+        ;set
         (set-exp (id exp)
                (begin
                  (setref!
@@ -210,7 +213,7 @@
                  1)
                )
                    
-      (else "tupu")
+      (else "Por implementar")
       )
     )
   )
@@ -238,13 +241,13 @@
 (define eval-prim
   (lambda (val1 prim val2 )
     (cases primitiva prim
-      ;; primitivas numericas
+      ; primitivas numericas
       (sum-prim () (+ val1 val2)) 
       (minus-prim () (- val1 val2) )
       (mult-prim () (* val1 val2))
       (div-prim () (/ val1 val2))
       (mod-prim () (remainder val1 val2))
-      ;; primitivas booleanas
+      ; primitivas booleanas
       (mayor-prim () (> val1 val2))
       (mayorIgual-prim () (>= val1 val2))
       (menor-prim () (< val1 val2))
@@ -257,22 +260,21 @@
     )
   )
 
-
+;-----------------------------------------------OCTALES-----------------------------------------------
 (define eval-primOctal
   (lambda (val1 prim val2 )
 
-    (define val1-dec (string->number val1 8))
+    (define val1-dec (string->number val1 8)) ;Cambio de base
     (define val2-dec (string->number val2 8))
     
     (cases primitiva prim
-      ;; primitivas numericas
+      ; primitivas numericas
       (sum-prim () (+ val1-dec val2-dec)) 
       (minus-prim () (- val1-dec val2-dec) )
       (mult-prim () (* val1-dec val2-dec))
       (div-prim () (/ val1-dec val2-dec))
       (mod-prim () (remainder val1-dec val2-dec))
-      
-      ;; primitivas booleanas
+      ; primitivas booleanas
       (mayor-prim () (> val1-dec val2-dec))
       (mayorIgual-prim () (>= val1-dec val2-dec))
       (menor-prim () (< val1-dec val2-dec))
@@ -285,11 +287,11 @@
     )
   )
 
-
+;--------------------------------------------HEXADECIMALES--------------------------------------------
 (define eval-primHexa
   (lambda (val1 prim val2 )
 
-    (define val1-dec (string->number val1 16))
+    (define val1-dec (string->number val1 16)) ;Cambio de base
     (define val2-dec (string->number val2 16))
     
     (cases primitiva prim
@@ -312,8 +314,7 @@
     )
   )
 
-
-
+;-------------------------------------------OPERACION-PRIM--------------------------------------------
 (define operacion-prim
   (lambda (lval op term)
     (cond
@@ -343,8 +344,10 @@
            (body expresion?)
            (env ambiente?)))
 
-;;Asignación/cambio referencias
-;;Extractor de referencias
+;---------------------------------------------ASIGNACION----------------------------------------------
+
+;--------------------------------------EXTRACTOR DE REFERENCIAS---------------------------------------
+
 (define deref
   (lambda (ref)
     (primitiva-deref ref)))
@@ -408,6 +411,7 @@
   (lambda (env var)
     (deref (apply-env-ref env var))))
 
+;--------------------------------------------APPLY-ENV-REF--------------------------------------------
 (define apply-env-ref
   (lambda (env var)
     (cases ambiente env
