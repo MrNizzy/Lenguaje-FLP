@@ -4,15 +4,15 @@
 
 ```BNF
 <espacio-blanco>    ::= whitespace
-<comentario>        ::= "#" {}* not #\newline
+<comentario>        ::= "//" {}* not #\newline
 <identificador>     ::= letter {letter | digit | "?" | "$"}*
 <texto>             ::= "\"" {letter | digit | "?" | "$" "-" "#" "." whitespace}* "\""
 <numero>            ::= digit {digit}*
                     ::= "-" digit {digit}*
                     ::= digit {digit}* "." digit {digit}*
                     ::= "-" digit {digit}* "." digit {digit}*
-                    ::= "0x" digit | "a" | "b" | "c" | "d" | "e" | "f"  {digit | "a" | "b" | "c" | "d" | "e" | "f" }*
-                    ::= "0o" digit not "8" "9" {digit not "8" "9"}*
+                    ::= "#x" digit | "a" | "b" | "c" | "d" | "e" | "f"  {digit | "a" | "b" | "c" | "d" | "e" | "f" }*
+                    ::= "#o" digit not "8" "9" {digit not "8" "9"}*
 ```
 
 ## Especificación gramatical
@@ -25,7 +25,7 @@
             ::= "true"
             ::= "false"
             ::= "if" <expresion> ":" <expresion> "else" <expresion>
-            ::= "(" <expresion> {<primitiva> <expresion>}* ")"
+            ::= "(" <expresion> <primitiva> <expresion> ")"
             ::= "let" <identificador> "=" <expresion> {<identificador "=" <expresion>}* "in" <expresion>
             ::= "proc" "(" <identificador> {"," <identificador>}* ")" <expresion>
             ::= "[" <expresion> {"," <expresion>}* "]"
@@ -51,12 +51,16 @@
 ### Comentarios
 
 ```pyscheme
-# Hola, soy un comentario
+// Hola, soy un comentario
 ```
 
+`// Hola, soy un comentario`
+
 ```pyscheme
-# Hello, World
+// Hello, World
 ```
+
+`// Hello, World`
 
 ### Numeros
 
@@ -64,9 +68,13 @@
 -3743
 ```
 
+`-3743`
+
 ```pyscheme
 -20.22
 ```
+
+`-20.22`
 
 ### Booleanos
 
@@ -74,9 +82,13 @@
 true
 ```
 
+`#t`
+
 ```pyscheme
 false
 ```
+
+`#f`
 
 ### Condicional
 
@@ -84,19 +96,33 @@ false
 if  (5 > 0) : 5 else 0
 ```
 
+`5`
+
 ```pyscheme
 if  (let i = 5 in (5+i) >= 9) : true else false
 ```
 
+`#t`
+
 ### Expresión infija
 
 ```pyscheme
- (let a = 5 in let j = 4 in (5 + j * a) <= 25)
+(let a = 5 in let j = 4 in ((5 + j) * a) <= 25)
 ```
+
+`#f`
 
 ```pyscheme
 (8%2)
 ```
+
+`0`
+
+```pyscheme
+((8%2)+(20/2))
+```
+
+`10`
 
 ### Locales
 
@@ -104,9 +130,13 @@ if  (let i = 5 in (5+i) >= 9) : true else false
 let a = (28%2) in (a+1)
 ```
 
+`1`
+
 ```pyscheme
 let a = 8 in (5 * let c = 2 in (c * c))
 ```
+
+`20`
 
 ### Procedimientos
 
@@ -114,13 +144,14 @@ let a = 8 in (5 * let c = 2 in (c * c))
 let
     f = proc (y , z) (y + (z - 5 ))
     in
-        [f 2 g]
         let
             f = proc (z) (z * 2)
             g = proc(x,y) (x + y)
         in
             [g [f 3] [f 4]]
 ```
+
+`14`
 
 ```pyscheme
 let x = 5
@@ -130,17 +161,23 @@ let x = 5
 in [f 2 x]
 ```
 
+`25`
+
 ### Asignación
 
 ```pyscheme
-let m = 0
+let m = -13.5
     in
         modify
             set m = (m+1);
             set m = (m*2);
             m
         end
+```
 
+`-25.0`
+
+```pyscheme
 let x = 100
     in
         let p = proc ( x )
@@ -151,6 +188,8 @@ let x = 100
         in
             ([p x] + [p x])
 ```
+
+`202`
 
 ```pyscheme
 let z = 0
@@ -164,6 +203,8 @@ let z = 0
                 [f 2]
             end
 ```
+
+`1`
 
 ### While
 
