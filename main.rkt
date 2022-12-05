@@ -174,31 +174,38 @@
                )
       ;Asignaciones
       ;modify
+      ;;begin
       (modify-exp (exp lexp)
-                 (if (null? lexp)
-                     (eval-expresion exp amb)
-                     (begin
-                       (eval-expresion exp amb)
-                       (letrec
-                           (
-                            (eval-exps (lambda (lexp)
-                                         (cond
-                                           [(null? (cdr lexp)) (eval-expresion (car lexp) amb)]
-                                           [else
-                                            (begin
-                                              (eval-expresion (car lexp) amb)
-                                              (eval-exps (cdr lexp)))])
-                                         )))
-                         (eval-exps lexp)
+                 (if
+                  (null? lexp)
+                  (eval-expresion exp amb)
+                  (begin
+                    (eval-expresion exp amb)
+                    (letrec
+                        (
+                         (eval-begin (lambda (lexp)
+                                          (cond
+                                            [(null? (cdr lexp)) (eval-expresion (car lexp) amb)]
+                                            [else
+                                             (begin
+                                               (eval-expresion (car lexp) amb)
+                                               (eval-begin (cdr lexp))
+                                               )
+                                             ]
+                                            )
+                                          )
+                                        )
                          )
-                       )
-                     )
+                      (eval-begin lexp)
+                      )
+                    )
+                  )
                  )
         ;;set
         (set-exp (id exp)
                (begin
                  (setref!
-                  (apply-env amb id)
+                  (apply-env-ref amb id)
                   (eval-expresion exp amb))
                  1)
                )
@@ -337,6 +344,17 @@
            (env ambiente?)))
 
 ;;Asignación/cambio referencias
+;;Extractor de referencias
+(define deref
+  (lambda (ref)
+    (primitiva-deref ref)))
+
+(define primitiva-deref
+  (lambda (ref)
+    (cases referencia ref
+      (a-ref (pos vec)
+             (vector-ref vec pos)))))
+
 (define setref!
   (lambda (ref val)
     (primitiva-setref! ref val)))
@@ -370,11 +388,14 @@
 ;---------------------------------------ESTRUCTURA DEL AMBIENTE---------------------------------------
 (define-datatype ambiente ambiente?
   (ambiente-vacio)
-  (ambiente-extendido
+  (ambiente-extendido-ref
    (lids (list-of symbol?))
-   (lvalue (list-of scheme-value?))
-   (old-env ambiente?))
-  )
+   (lvalue vector?)
+   (old-env ambiente?)))
+
+(define ambiente-extendido
+  (lambda (lids lvalue old-env)
+    (ambiente-extendido-ref lids (list->vector lvalue) old-env)))
 
 ;------------------------------------------AMBIENTE INICIAL-------------------------------------------
 (define ambiente-inicial
@@ -384,22 +405,31 @@
 
 ;----------------------------------------------APPLY ENV----------------------------------------------
 (define apply-env
-  (lambda (env sym)
+  (lambda (env var)
+    (deref (apply-env-ref env var))))
+
+(define apply-env-ref
+  (lambda (env var)
     (cases ambiente env
-      (ambiente-vacio () (eopl:error "No se encuentre la variable:" sym))
-      (ambiente-extendido (lid lval env-old)
+      (ambiente-vacio () (eopl:error "No se encuentra la variable " var))
+      (ambiente-extendido-ref (lid vec old-env)
                           (letrec
                               (
-                               (buscar-sim
-                                (lambda (lid lval sym)
-                                  (cond
-                                    [(null? lid) (apply-env env-old sym)]
-                                    [(equal? (car lid) sym) (car lval)]
-                                    [else (buscar-sim (cdr lid) (cdr lval) sym)]))
-                                )
+                               (buscar-variable (lambda (lid vec pos)
+                                                  (cond
+                                                    [(null? lid) (apply-env-ref old-env var)]
+                                                    [(equal? (car lid) var) (a-ref pos vec)]
+                                                    [else
+                                                     (buscar-variable (cdr lid) vec (+ pos 1)  )]
+                                                    )
+                                                  )
+                                                )
                                )
-                            (buscar-sim lid lval sym))
+                            (buscar-variable lid vec 0)
+                            )
+                          
                           )
+      
       )
     )
   )
