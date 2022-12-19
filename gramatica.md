@@ -33,8 +33,8 @@
             ::= "modify" <expresion> {";" <expresion>}* "end"
             ::= "while" <expresion> ":" <expresion>
             ::= "for" <expresion> "in" <expresion> ":" <expresion>
-            ::= "struct" <identificador> "=" "{" <identificador> ":" <expresion> {"," <identificador> ":" <expresion>}* "}"
-            ::= "get" <identificador> "." <identificador>
+            ::= "struct" "{" {"," <identificador> ":" <expresion>}* "}"
+            ::= "get" <expresion> "." <identificador>
             ::= "send" <identificador> "." <identificador>
 
 <primitiva> ::= "+" | "-" | "*" | "%" | "/"
@@ -212,11 +212,14 @@ let z = 0
 while let i = 0 in  (i > 0) : true
 ```
 
+>No implementado
+
 ```pyscheme
 while let i = 0 in  (i <= 9) : let j = 5 in (i+j)
 ```
 
-> Infinito
+>No implementado
+
 
 ### For
 
@@ -224,39 +227,45 @@ while let i = 0 in  (i <= 9) : let j = 5 in (i+j)
 for let i = 0 in  (i + 1) in 5 : true
 ```
 
+>No implementado
+
 ```pyscheme
 for let i = 0 in  (i + 5) in 20 : let a = 0 in (a+i)
 ```
 
+>No implementado
+
 ### Estructuras
 
+#### Obtener atributo
+
 ```pyscheme
-struct persona = {
+let q = struct {
     edad: 20,
     ciudad: "Colombia",
-    salario: "$2.500.000 COP"
+    salario: "$2.500.000 COP",
 }
+	in
+		get q.ciudad
 ```
 
+`"\"Colombia\""`
+
 ```pyscheme
-struct pyscheme = {
+let pyscheme = struct {
     version: "1.0.0",
     curso: "Fundamentos de Lenguajes de Programación",
-    hagstag: "#NoMasScheme"
+    hagstag: "#NoMasScheme",
 }
+	in get pyscheme.version
 ```
 
-### Obtener atributo
+`"\"1.0.0\""`
 
-```pyscheme
-get pyscheme.version
-```
-
-```pyscheme
-get pyscheme.hastag
-```
 
 ### Modificar atributo
+
+>No implementado
 
 ```pyscheme
 send pyscheme.hastag = "#Cancelar"
