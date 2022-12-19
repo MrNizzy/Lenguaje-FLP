@@ -62,10 +62,9 @@
     (expresion ("for" expresion "in" expresion ":" expresion) for-exp)
 
     ;...........................................ESTRUCTURA............................................
-    (expresion ("struct" identificador "=" "{" identificador ":" expresion
-                         (arbno "," identificador ":" expresion) "}") struct-exp)
-    (expresion ("get" identificador "." identificador) getStruct-exp)
-    (expresion ("send" identificador "." identificador "=" expresion) sendStruct-exp)
+    (expresion ("struct" "{" (arbno identificador ":" expresion ",") "}") struct-exp)
+    (expresion ("get" expresion "." identificador) getStruct-exp)
+    (expresion ("send" expresion "." identificador "=" expresion) sendStruct-exp)
 
     ;--------------------------------------------PRIMITIVAS-------------------------------------------
     
@@ -212,8 +211,65 @@
                   (eval-expresion exp amb))
                  1)
                )
-                   
-      (else "Por implementar")
+      ;while
+      (while-exp (condicion body)
+                 (letrec
+                     (
+                     (eval-while (lambda (body)
+                                     (while-exp condicion body)
+                                     )))
+                   (eval-while body)
+                   ))
+      ;Struct
+      (struct-exp (lids lexps)
+                (let
+                    (
+                 [exps (map (lambda (x) (eval-expresion x amb)) lexps)]
+                 )
+                 (list lids exps))
+                )
+      ;Get Struct
+      (getStruct-exp (exp id) (let
+                               (
+                                [dic (eval-expresion exp amb)]
+                                )
+                             (letrec
+                                 (
+                                  [buscar-id
+                                   (lambda (id keys)
+                                     (cond
+                                       [(null? keys) 0]
+                                       [(equal? id (car keys)) 1]
+                                       [else (+ 1 (buscar-id id (cdr keys)))]))]
+                                  [buscar-value
+                                   (lambda (values index)
+                                     (cond
+                                       [(equal? index 1) (car values)]
+                                       [else (buscar-value (cdr values) (- index 1))]))]
+                                  )
+                               (buscar-value (cadr dic) (buscar-id id (car dic))))))
+      ;Send struct
+      (sendStruct-exp (exp id exp1) (let
+                                        (
+                                         [dic (eval-expresion exp amb)]
+                                         )
+                                      (letrec
+                                          (
+                                           [buscar-id
+                                            (lambda (id keys)
+                                              (cond
+                                                [(null? keys) 0]
+                                                [(equal? id (car keys)) 1]
+                                                [else (+ 1 (buscar-id id (cdr keys)))]))]
+                                           [buscar-value
+                                            (lambda (values index)
+                                              (cond
+                                                [(equal? index 1) (car values)]
+                                                [else (buscar-value (cdr values) (- index 1))]))]
+                                           )
+                                        (assoc dic id exp1)))
+                      )
+      (else 0)
       )
     )
   )
